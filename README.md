@@ -48,4 +48,4 @@ npm start
 
 ## License
 
-MIT License - See LICENSE file for details
+WTFPL License - See LICENSE file for details
