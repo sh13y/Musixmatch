@@ -1,0 +1,59 @@
+name: Update Token
+on:
+  push:
+    paths:
+      - ".github/workflows/update-token.yml"
+      - "src/index.ts"
+
+  schedule:
+    - cron: "*/5 * * * *"
+
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: "token"
+  cancel-in-progress: true
+
+jobs:
+  update_token:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install
+
+      - run: bun run src/index.ts
+
+      - run: echo `date +%s` > last-updated.txt
+
+      - name: Push to GitHub
+        run: |
+          git config user.name lonelilbot
+          git config user.email bot@lonelil.com
+          git add .
+          git commit -m "Update ($(date +'%Y-%m-%dT%H:%M:%S'))
+          
+          Co-authored-by: lonelil <51315646+lonelil@users.noreply.github.com>" || exit 0
+          git push
+
+  retrigger:
+    name: Retrigger workflow
+    runs-on: ubuntu-latest
+    if: '${{ always() }}'
+    needs: update_token
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Retrigger workflow
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: Update Token
